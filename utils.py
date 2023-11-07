@@ -21,36 +21,27 @@ def build_vocab(data_dir, tokenizer, max_size, min_freq):
         for word in tokenizer(path_value):
             vocab_dic[word] = vocab_dic.get(word, 0) + 1
     vocab_list = sorted([_ for _ in vocab_dic.items() if _[1] >= min_freq], key=lambda x: x[1], reverse=True)[
-        :max_size] # 排序 去除低频词
-    word_to_id = {word_count[0]: idx for idx, word_count in enumerate(vocab_list)} # 转换为从0开始
-    word_to_id.update({UNK: len(vocab_dic), PAD: len(vocab_dic) + 1})    # 添加UNK和PAD
+                 :max_size]  # 排序 去除低频词
+    word_to_id = {word_count[0]: idx for idx, word_count in enumerate(vocab_list)}  # 转换为从0开始
+    word_to_id.update({UNK: len(vocab_dic), PAD: len(vocab_dic) + 1})  # 添加UNK和PAD
     return word_to_id
 
 
-def build_dataset(config, ues_word):
-    if ues_word:
-        tokenizer = lambda x: x.split('|')  # 以空格隔开，word-level
-    else:
-        tokenizer = lambda x: [y for y in x]  # char-level
-    if os.path.exists(config.vocab_path):
-        # 如果词表存在
-        vocab = pkl.load(open(config.vocab_path, 'rb'))
-    else:
-        # 构建词表
-        vocab = build_vocab(config.train_path, tokenizer=tokenizer, max_size=MAX_VOCAB_SIZE, min_freq=50)
-        pkl.dump(vocab, open(config.vocab_path, 'wb')) # 保存
-
+def build_dataset(config):
+    tokenizer = lambda x: x.split('|')  # word-level
+    vocab = pkl.load(open(config.vocab_path, 'rb'))  # 打开词表
     print(f"词表大小: {len(vocab)}")
+    class_int_dict = {item:i + 1 for i, item in enumerate(config.class_list)}
 
     def load_dataset(data_dir, pad_size):
-        df = pd.read_csv(data_dir, usecols=['path','cluster'])
+        df = pd.read_csv(data_dir, usecols=['path', 'cluster'])  # 读取csv
         contents = []
         for index, row in tqdm(df.iterrows()):
-            content, label = row['path'],row['cluster']
+            content, label = row['path'], row['cluster']
             token = tokenizer(content)
             seq_len = len(token)
-            if pad_size:
-                if len(token) < pad_size:
+            if pad_size: # 统一长度
+                if seq_len < pad_size:
                     token.extend([PAD] * (pad_size - len(token)))
                 else:
                     token = token[:pad_size]
@@ -58,13 +49,11 @@ def build_dataset(config, ues_word):
             words_line = []
             for word in token:
                 words_line.append(vocab.get(word, vocab.get(UNK)))
-            contents.append((words_line, int(label), seq_len))
+            contents.append((words_line, class_int_dict[label], seq_len))
         return contents  # [([...], 0), ([...], 1), ...]
 
-    train = load_dataset(config.train_path, config.pad_size)
-    dev = load_dataset(config.dev_path, config.pad_size)
-    test = load_dataset(config.test_path, config.pad_size)
-    return vocab, train, dev, test
+    dataset = load_dataset(config.data_path, config.pad_size)
+    return vocab, dataset
 
 
 class DatasetIterater(object):

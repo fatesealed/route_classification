@@ -1,8 +1,9 @@
-# Chinese-Text-Classification-Pytorch
+# 船舶路径分类
+> 自用 数据集特殊
 
-[![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
+参考大佬：https://github.com/649453932/Chinese-Text-Classification-Pytorch
 
-中文文本分类，TextCNN，TextRNN，FastText，TextRCNN，BiLSTM_Attention, DPCNN, Transformer, 基于pytorch，开箱即用。
+TextCNN，TextRNN，FastText，TextRCNN，BiLSTM_Attention, DPCNN, Transformer, 基于pytorch，开箱即用。
 
 ## 介绍
 
@@ -10,27 +11,6 @@
 
 数据以字为单位输入模型，预训练词向量使用 [搜狗新闻 Word+Character 300d](https://github.com/Embedding/Chinese-Word-Vectors)，[点这里下载](https://pan.baidu.com/s/14k-9jsspp43ZhMxqPmsWMQ)
 
-## 环境
-
-python 3.7  
-pytorch 1.1  
-tqdm  
-sklearn  
-tensorboardX
-
-## 中文数据集
-
-我从[THUCNews](http://thuctc.thunlp.org/)中抽取了20万条新闻标题，已上传至github，文本长度在20到30之间。一共10个类别，每类2万条。
-
-类别：财经、房产、股票、教育、科技、社会、时政、体育、游戏、娱乐。
-
-数据集划分：
-
-| 数据集 | 数据量 |
-|-----|-----|
-| 训练集 | 18万 |
-| 验证集 | 1万  |
-| 测试集 | 1万  |
 
 ### 更换自己的数据集
 
@@ -54,32 +34,6 @@ tensorboardX
 
 bert和ERNIE模型代码我放到另外一个仓库了，传送门：[Bert-Chinese-Text-Classification-Pytorch](https://github.com/649453932/Bert-Chinese-Text-Classification-Pytorch)
 ，后续还会搞一些bert之后的东西，欢迎star。
-
-## 使用说明
-
-```
-# 训练并测试：
-# TextCNN
-python run.py --model TextCNN
-
-# TextRNN
-python run.py --model TextRNN
-
-# TextRNN_Att
-python run.py --model TextRNN_Att
-
-# TextRCNN
-python run.py --model TextRCNN
-
-# FastText, embedding层是随机初始化的
-python run.py --model FastText --embedding random 
-
-# DPCNN
-python run.py --model DPCNN
-
-# Transformer
-python run.py --model Transformer
-```
 
 ### 参数
 

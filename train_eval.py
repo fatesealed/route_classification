@@ -2,57 +2,57 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as f
 from sklearn import metrics
 import time
 from utils import get_time_dif
-from tensorboardX import SummaryWriter
 import datetime
 
 
 # 权重初始化，默认xavier
 def init_network(model, method='xavier', exclude='embedding'):
     for name, w in model.named_parameters():
-        if exclude not in name:
-            if 'weight' in name:
+        if exclude not in name:  # 如果不是嵌入层
+            if 'weight' in name:  # weight 三种初始化方式
                 if method == 'xavier':
                     nn.init.xavier_normal_(w)
                 elif method == 'kaiming':
                     nn.init.kaiming_normal_(w)
                 else:
                     nn.init.normal_(w)
-            elif 'bias' in name:
+            elif 'bias' in name:  # bias 置0
                 nn.init.constant_(w, 0)
             else:
                 pass
 
 
 def train(config, model, train_iter, dev_iter, test_iter, notes):
-    print(config.embed)
     start_time = time.time()
-    model.train()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
-
     # 学习率指数衰减，每次epoch：学习率 = gamma * 学习率
     # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
     total_batch = 0  # 记录进行到多少batch
     dev_best_loss = float('inf')
-    last_improve = 0  # 记录上次验证集loss下降的batch数
+    last_improve = 0  # 记录上次验证集loss下降的batch下标
     flag = False  # 记录是否很久没有效果提升
-    writer = SummaryWriter(log_dir=config.log_path + '/' + str(config.embed) + '_' + str(
-        config.is_random) + '_' + notes + '_' + time.strftime('%m-%d_%H.%M', time.localtime()))
+    model.train()
+    # writer = SummaryWriter(log_dir=config.log_path + '/' + str(config.embed) + '_' + str(
+    #     config.is_random) + '_' + notes + '_' + time.strftime('%m-%d_%H.%M', time.localtime()))
     for epoch in range(config.num_epochs):
-        print('Epoch [{}/{}]'.format(epoch + 1, config.num_epochs))
+        print(f'Epoch [{epoch + 1}/{config.num_epochs}]')
         # scheduler.step() # 学习率衰减
-        for i, (trains, labels) in enumerate(train_iter):
-            outputs = model(trains)
+        for i, (x, y, _) in enumerate(train_iter):
+            print(len(x[0]),y.shape)
+            x = x.to(config.device)
+            y = y.to(config.device)
+            outputs = model(x)
             model.zero_grad()
-            loss = F.cross_entropy(outputs, labels)
+            loss = f.cross_entropy(outputs, y)
             loss.backward()
             optimizer.step()
             if total_batch % 100 == 0:
                 # 每多少轮输出在训练集和验证集上的效果
-                true = labels.data.cpu()
+                true = y.data.cpu()
                 predic = torch.max(outputs.data, 1)[1].cpu()
                 train_acc = metrics.accuracy_score(true, predic)
                 # train_recall = metrics.recall_score(true, predic)
@@ -70,10 +70,10 @@ def train(config, model, train_iter, dev_iter, test_iter, notes):
                 msg = 'Iter: {0:>6},  Train Loss: {1:>5.2},  Train Acc: {2:>6.2%},  Val Loss: {3:>5.2},  Val Acc: {' \
                       '4:>6.2%},  Time: {5} {6} '
                 print(msg.format(total_batch, loss.item(), train_acc, dev_loss, dev_acc, time_dif, improve))
-                writer.add_scalar("loss/train", loss.item(), total_batch)
-                writer.add_scalar("loss/dev", dev_loss, total_batch)
-                writer.add_scalar("acc/train", train_acc, total_batch)
-                writer.add_scalar("acc/dev", dev_acc, total_batch)
+                # writer.add_scalar("loss/train", loss.item(), total_batch)
+                # writer.add_scalar("loss/dev", dev_loss, total_batch)
+                # writer.add_scalar("acc/train", train_acc, total_batch)
+                # writer.add_scalar("acc/dev", dev_acc, total_batch)
                 model.train()
             total_batch += 1
             if total_batch - last_improve > config.require_improvement:
@@ -83,7 +83,7 @@ def train(config, model, train_iter, dev_iter, test_iter, notes):
                 break
         if flag:
             break
-    writer.close()
+    # writer.close()
     t = test(config, model, test_iter)
     # 打开文件，以“a”模式（追加模式）写入文本
     with open('ship_data/res.txt', 'a') as file:
@@ -123,7 +123,7 @@ def evaluate(config, model, data_iter, test=False):
             # if len(labels) == 1:
             #     continue
             outputs = model(texts)
-            loss = F.cross_entropy(outputs, labels)
+            loss = f.cross_entropy(outputs, labels)
             loss_total += loss
             labels = labels.data.cpu().numpy()
             predic = torch.max(outputs.data, 1)[1].cpu().numpy()
