@@ -3,9 +3,9 @@ import torch
 import numpy as np
 from torch.utils.data import random_split, DataLoader
 import pickle as pkl
-from train_eval import train, init_network
+from train_eval import train, init_network, test
 from importlib import import_module
-from utils import build_dataset, build_iterator, CustomDataset
+from utils import CustomDataset
 
 import argparse
 
@@ -34,9 +34,8 @@ if __name__ == '__main__':
     x = import_module('models.' + model_name)  # 动态导入对应训练类
     config = x.Config(dataset, embedding)  # 创建对应类的配置文件
 
-    print("加载数据")
     dataset = CustomDataset(config)
-    vocab = vocab = pkl.load(open(config.vocab_path, 'rb'))  # 打开词表
+    vocab = pkl.load(open(config.vocab_path, 'rb'))  # 打开词表
     # 定义拆分比例
     train_size = int(0.9 * len(dataset))
     val_size = int(0.05 * len(dataset))
@@ -45,19 +44,24 @@ if __name__ == '__main__':
     # 使用random_split函数拆分数据集
     train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
     # # 加载训练集 验证集 测试集
-    # train_iter = build_iterator(train_data, config)
-    # dev_iter = build_iterator(dev_data, config)
-    # test_iter = build_iterator(test_data, config)
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size)
     test_loader = DataLoader(test_dataset, batch_size=config.batch_size)
-    print("加载完毕")
 
     # # 训练
     config.n_vocab = len(vocab)
     model = x.Model(config).to(config.device)
+
     # 初始化参数
     if model_name != 'Transformer':
         init_network(model)
     print(model.parameters)
     train(config, model, train_loader, val_loader, test_loader, notes)
+    t = test(config, model, test_loader)
+    # 打开文件，以“a”模式（追加模式）写入文本
+    with open('ship_data/res.txt', 'a') as file:
+        file.write(str(config.embed) + '_' + notes)
+        # 追加文本内容到文件末尾
+        file.write(config.is_random + ' ' + config.model_name + '\n')
+        file.write(t)
+        file.write('\n')

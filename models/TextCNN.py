@@ -10,13 +10,13 @@ class Config(object):
 
     def __init__(self, dataset, embedding):
         self.model_name = 'TextCNN'
-        self.data_path = dataset + '/test.csv'
-        self.class_list = [x.strip() for x in open(dataset + '/class.txt', encoding='utf-8').readlines()]  # 类别名单
-        self.vocab_path = dataset + '/vocab.pkl'  # 词表
+        self.data_path = dataset + '/experiment_data.csv'
+        self.class_list = [x.strip() for x in open(dataset + '/pre_data/class.txt', encoding='utf-8').readlines()]  # 类别名单
+        self.vocab_path = dataset + '/pre_data/vocab.pkl'  # 词表
         self.save_path = dataset + '/saved_dict/' + self.model_name + '.ckpt'  # 模型训练结果
         self.log_path = dataset + '/log/' + self.model_name
         self.embedding_pretrained = torch.tensor(
-            np.load(dataset + '/' + embedding)["embeddings"].astype('float32')) \
+            np.load(dataset + '/pre_data/' + embedding)["embeddings"].astype('float32')) \
             if embedding != 'random' else None  # 预训练词向量
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 设备
         self.is_random = "random" if embedding == "random" else "not_random"
@@ -65,5 +65,4 @@ class Model(nn.Module):
         out = torch.cat([conv_and_pool(out, conv) for conv in self.convs], 1)
         out = self.dropout(out)
         out = self.fc3(self.fc2(self.fc1(out)))
-        print(out.shape)
         return out
