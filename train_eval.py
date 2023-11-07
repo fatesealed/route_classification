@@ -42,7 +42,6 @@ def train(config, model, train_iter, dev_iter, test_iter, notes):
         print(f'Epoch [{epoch + 1}/{config.num_epochs}]')
         # scheduler.step() # 学习率衰减
         for i, (x, y, _) in enumerate(train_iter):
-            print(len(x[0]),y.shape)
             x = x.to(config.device)
             y = y.to(config.device)
             outputs = model(x)

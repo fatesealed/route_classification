@@ -39,7 +39,8 @@ class Config(object):
 
 
 def conv_and_pool(x, conv):
-    x = f.relu(conv(x)).squeeze(3)
+    x = f.relu(conv(x))
+    x = x.squeeze(3)
     x = f.max_pool1d(x, x.size(2)).squeeze(2)
     return x
 
@@ -54,12 +55,15 @@ class Model(nn.Module):
         self.convs = nn.ModuleList(
             [nn.Conv2d(1, config.num_filters, (k, config.embed)) for k in config.filter_sizes])
         self.dropout = nn.Dropout(config.dropout)
-        self.fc = nn.Linear(config.num_filters * len(config.filter_sizes), config.num_classes)
+        self.fc1 = nn.Linear(config.num_filters * len(config.filter_sizes), config.num_filters * len(config.filter_sizes)//2)
+        self.fc2=nn.Linear(config.num_filters * len(config.filter_sizes)//2,config.num_filters * len(config.filter_sizes)//4)
+        self.fc3=nn.Linear(config.num_filters * len(config.filter_sizes)//4,config.num_classes)
 
     def forward(self, x):
-        out = self.embedding(x[0])
-        out = out.unsqueeze(1)
+        out = self.embedding(x)
+        out = out.unsqueeze(1)  #插入维度 进行卷积运算
         out = torch.cat([conv_and_pool(out, conv) for conv in self.convs], 1)
         out = self.dropout(out)
-        out = self.fc(out)
+        out = self.fc3(self.fc2(self.fc1(out)))
+        print(out.shape)
         return out
