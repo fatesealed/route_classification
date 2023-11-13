@@ -1,8 +1,8 @@
 # coding: UTF-8
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
-import numpy as np
 
 
 class Config(object):
@@ -10,8 +10,9 @@ class Config(object):
 
     def __init__(self, dataset, embedding):
         self.model_name = 'TextCNN'
-        self.data_path = dataset + '/experiment_data.csv'
-        self.class_list = [x.strip() for x in open(dataset + '/pre_data/class.txt', encoding='utf-8').readlines()]  # 类别名单
+        self.data_path = dataset + '/text.csv'
+        self.class_list = [x.strip() for x in
+                           open(dataset + '/pre_data/class.txt', encoding='utf-8').readlines()]  # 类别名单
         self.vocab_path = dataset + '/pre_data/vocab.pkl'  # 词表
         self.save_path = dataset + '/saved_dict/' + self.model_name + '.ckpt'  # 模型训练结果
         self.log_path = dataset + '/log/' + self.model_name
@@ -22,7 +23,7 @@ class Config(object):
         self.is_random = "random" if embedding == "random" else "not_random"
 
         self.dropout = 0.5  # 随机失活
-        self.require_improvement = 2500  # 若超过1000batch效果还没提升，则提前结束训练
+        self.require_improvement = 10  # 若超过1000batch效果还没提升，则提前结束训练
         self.num_classes = len(self.class_list)  # 类别数
         self.n_vocab = 0  # 词表大小，在运行时赋值
         self.num_epochs = 1000  # epoch数
@@ -49,20 +50,26 @@ class Model(nn.Module):
     def __init__(self, config):
         super(Model, self).__init__()
         if config.embedding_pretrained is not None:
-            self.embedding = nn.Embedding.from_pretrained(config.embedding_pretrained, freeze=False)
+            self.embedding_1 = nn.Embedding.from_pretrained(config.embedding_pretrained, freeze=False)
+            self.embedding_2 = nn.Embedding.from_pretrained(config.embedding_pretrained, freeze=False)
         else:
-            self.embedding = nn.Embedding(config.n_vocab, config.embed, padding_idx=config.n_vocab - 1)
+            self.embedding_1 = nn.Embedding(config.n_vocab, config.embed, padding_idx=config.n_vocab - 1)
+            self.embedding_2 = nn.Embedding(config.n_vocab, config.embed, padding_idx=config.n_vocab - 1)
+        self.embedding_2.requires_grad = False  # 第二层不训练
         self.convs = nn.ModuleList(
-            [nn.Conv2d(1, config.num_filters, (k, config.embed)) for k in config.filter_sizes])
+            [nn.Conv2d(1, config.num_filters, (k, config.embed * 2)) for k in config.filter_sizes])
         self.dropout = nn.Dropout(config.dropout)
-        self.fc1 = nn.Linear(config.num_filters * len(config.filter_sizes), config.num_filters * len(config.filter_sizes)//2)
-        self.fc2=nn.Linear(config.num_filters * len(config.filter_sizes)//2,config.num_filters * len(config.filter_sizes)//4)
-        self.fc3=nn.Linear(config.num_filters * len(config.filter_sizes)//4,config.num_classes)
+        self.fc_layers = nn.Sequential(
+            nn.Linear(config.num_filters * len(config.filter_sizes),
+                      config.num_filters * len(config.filter_sizes) // 2),
+            nn.Linear(config.num_filters * len(config.filter_sizes) // 2,
+                      config.num_filters * len(config.filter_sizes) // 4),
+            nn.Linear(config.num_filters * len(config.filter_sizes) // 4, config.num_classes))
 
     def forward(self, x):
-        out = self.embedding(x)
-        out = out.unsqueeze(1)  #插入维度 进行卷积运算
+        out = torch.cat((self.embedding_1(x), self.embedding_2(x)), dim=2)
+        out = out.unsqueeze(1)  # 插入维度 进行卷积运算
         out = torch.cat([conv_and_pool(out, conv) for conv in self.convs], 1)
         out = self.dropout(out)
-        out = self.fc3(self.fc2(self.fc1(out)))
+        out = self.fc_layers(out)
         return out

@@ -1,12 +1,11 @@
 # coding: UTF-8
-import os
-import torch
-import numpy as np
 import pickle as pkl
 import time
 from datetime import timedelta
+
 import pandas as pd
-from torch.utils.data import Dataset, DataLoader, random_split
+import torch
+from torch.utils.data import Dataset
 
 UNK, PAD = '<UNK>', '<PAD>'  # 未知字，padding符号
 

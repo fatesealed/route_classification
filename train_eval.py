@@ -1,13 +1,13 @@
 # coding: UTF-8
-import numpy as np
+import time
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as f
 from sklearn import metrics
-import time
-from utils import get_time_dif
-import datetime
 from torch.utils.tensorboard import SummaryWriter
+
+from utils import get_time_dif
 
 
 # 权重初始化，默认xavier
@@ -27,7 +27,7 @@ def init_network(model, method='xavier', exclude='embedding'):
                 pass
 
 
-def train(config, model, train_iter, dev_iter, test_iter, notes):
+def train(config, model, train_iter, dev_iter, notes):
     start_time = time.time()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
     # 学习率指数衰减，每次epoch：学习率 = gamma * 学习率
@@ -42,7 +42,7 @@ def train(config, model, train_iter, dev_iter, test_iter, notes):
     for epoch in range(config.num_epochs):
         print(f'Epoch [{epoch + 1}/{config.num_epochs}]')
         # scheduler.step() # 学习率衰减
-        for i, (x, y, _) in enumerate(train_iter):
+        for x, y, _ in train_iter:
             x = x.to(config.device)
             y = y.to(config.device)
             outputs = model(x)
@@ -57,7 +57,10 @@ def train(config, model, train_iter, dev_iter, test_iter, notes):
                 train_acc = metrics.accuracy_score(true, predic)
                 # train_recall = metrics.recall_score(true, predic)
                 # train_f1 = metrics.f1_score(true, predic)
-                dev_acc, dev_loss = evaluate(config, model, dev_iter)
+                results = evaluate(config, model, dev_iter)
+                # Access accuracy and loss from the results dictionary
+                dev_acc = results['accuracy']
+                dev_loss = results['loss']
                 if dev_loss < dev_best_loss:
                     # 当验证集损失下降时
                     dev_best_loss = dev_loss
@@ -90,7 +93,11 @@ def test(config, model, test_iter):
     # 选用表现最好的那轮
     model.load_state_dict(torch.load(config.save_path))
     model.eval()
-    test_acc, test_loss, test_report, test_confusion = evaluate(config, model, test_iter, test=True)
+    result = evaluate(config, model, test_iter, is_test=True)
+    test_acc = result['accuracy']
+    test_loss = result['loss']
+    test_report = result['report']
+    test_confusion = result['confusion_matrix']
     msg = 'Test Loss: {0:>5.2},  Test Acc: {1:>6.2%}'
     print(msg.format(test_loss, test_acc))
     print("Precision, Recall and F1-Score...")
@@ -100,14 +107,13 @@ def test(config, model, test_iter):
     return test_report
 
 
-def evaluate(config, model, data_iter, test=False):
-    model.eval()
-    loss_total = 0
-    predict_all = []
-    labels_all = []
-
+def evaluate(config, model, data_iter, is_test=False):
     with torch.no_grad():
-        for i, (x, y, _) in enumerate(data_iter):
+        model.eval()
+        loss_total = 0
+        predict_all = []
+        labels_all = []
+        for x, y, _ in data_iter:
             x = x.to(config.device)
             y = y.to(config.device)
             outputs = model(x)
@@ -117,15 +123,19 @@ def evaluate(config, model, data_iter, test=False):
             labels_all.append(y)
             predict_all.append(predict)
 
-    labels_all = torch.cat(labels_all).cpu().numpy()  # 合并标签
-    predict_all = torch.cat(predict_all).cpu().numpy()  # 合并预测
+        labels_all = torch.cat(labels_all).cpu().numpy()  # 合并标签
+        predict_all = torch.cat(predict_all).cpu().numpy()  # 合并预测
 
-    acc = metrics.accuracy_score(labels_all, predict_all)
+        acc = metrics.accuracy_score(labels_all, predict_all)
 
-    if test:
-        print(labels_all)
-        print(predict_all)
-        report = metrics.classification_report(labels_all, predict_all, target_names=config.class_list, digits=4)
-        confusion = metrics.confusion_matrix(labels_all, predict_all)
-        return acc, loss_total / len(data_iter), report, confusion
-    return acc, loss_total / len(data_iter)
+        results = {
+            'accuracy': acc,
+            'loss': loss_total / len(data_iter),
+        }
+
+        if is_test:
+            results['report'] = metrics.classification_report(labels_all, predict_all, target_names=config.class_list,
+                                                              digits=4)
+            results['confusion_matrix'] = metrics.confusion_matrix(labels_all, predict_all)
+
+        return results
