@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from train_eval import train, init_network
-from utils import CustomDataset
+from utils import CustomDataset, DataConfig
 
 
 def main():
@@ -34,29 +34,30 @@ def main():
 
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
-    config = model_module.Config(dataset, embedding,notes)
+    model_config = model_module.Config(notes)
+    data_config = DataConfig(dataset, embedding)
 
     # 创建自定义数据集
     print('start read data...')
-    train_dataset = CustomDataset(config, data_class='train')
-    val_dataset = CustomDataset(config, data_class='val')
-    vocab = pkl.load(open(config.vocab_path, 'rb'))
+    train_dataset = CustomDataset(data_config, data_class='train')
+    val_dataset = CustomDataset(data_config, data_class='val')
+    vocab = pkl.load(open(data_config.vocab_path, 'rb'))
+    data_config.n_vocab = len(vocab)
     print('read data done...')
 
     # 数据加载器
-    train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=config.batch_size)
+    train_loader = DataLoader(train_dataset, batch_size=model_config.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=model_config.batch_size)
 
     # 训练
-    config.n_vocab = len(vocab)
-    model = model_module.Model(config).to(config.device)
+
+    model = model_module.Model(model_config,data_config).to(data_config.device)
 
     # 初始化模型参数
     if model_name != 'Transformer':
         init_network(model)
-    model.load_state_dict(torch.load('./result/TextCNN_2embedding_not_freezze.ckpt'))
 
-    train(config, model, train_loader, val_loader, notes)
+    train(model_config, data_config, model, train_loader, val_loader, notes)
 
 
 if __name__ == '__main__':

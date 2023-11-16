@@ -27,24 +27,24 @@ def init_network(model, method='xavier', exclude='embedding'):
                 pass
 
 
-def train(config, model, train_iter, dev_iter, notes):
+def train(model_config,data_config, model, train_iter, dev_iter, notes):
     start_time = time.time()
-    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=model_config.learning_rate)
     # 学习率指数衰减，每次epoch：学习率 = gamma * 学习率
-    # scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
     total_batch = 0  # 记录进行到多少batch
     dev_best_loss = float('inf')
     last_improve = 0  # 记录上次验证集loss下降的batch下标
     flag = False  # 记录是否很久没有效果提升
     model.train()
     writer_time = time.strftime('%m-%d_%H.%M', time.localtime())
-    writer = SummaryWriter(log_dir=f'{config.log_path}/{str(config.embed)}_{notes}_{writer_time}')
-    for epoch in range(config.num_epochs):
-        print(f'Epoch [{epoch + 1}/{config.num_epochs}]')
-        # scheduler.step() # 学习率衰减
+    writer = SummaryWriter(log_dir=f'{model_config.log_path}/{str(data_config.embed)}_{notes}_{writer_time}')
+    for epoch in range(model_config.num_epochs):
+        print(f'Epoch [{epoch + 1}/{model_config.num_epochs}]')
+        scheduler.step() # 学习率衰减
         for x, y, _ in train_iter:
-            x = x.to(config.device)
-            y = y.to(config.device)
+            x = x.to(data_config.device)
+            y = y.to(data_config.device)
             outputs = model(x)
             loss = f.cross_entropy(outputs, y)
             loss.backward()
@@ -57,14 +57,14 @@ def train(config, model, train_iter, dev_iter, notes):
                 train_acc = metrics.accuracy_score(true, predic)
                 # train_recall = metrics.recall_score(true, predic)
                 # train_f1 = metrics.f1_score(true, predic)
-                results = evaluate(config, model, dev_iter)
+                results = evaluate(data_config, model, dev_iter)
                 # Access accuracy and loss from the results dictionary
                 dev_acc = results['accuracy']
                 dev_loss = results['loss']
                 if dev_loss < dev_best_loss:
                     # 当验证集损失下降时
                     dev_best_loss = dev_loss
-                    torch.save(model.state_dict(), config.save_path)
+                    torch.save(model.state_dict(), model_config.save_path)
                     improve = '*'
                     last_improve = total_batch
                 else:
@@ -79,7 +79,7 @@ def train(config, model, train_iter, dev_iter, notes):
                 writer.add_scalar("acc/dev", dev_acc, total_batch)
                 model.train()
             total_batch += 1
-            if total_batch - last_improve > config.require_improvement:
+            if total_batch - last_improve > model_config.require_improvement:
                 # 验证集loss超过1000batch没下降，结束训练
                 print("No optimization for a long time, auto-stopping...")
                 flag = True
@@ -89,9 +89,9 @@ def train(config, model, train_iter, dev_iter, notes):
     writer.close()
 
 
-def test(config, model, test_iter):
+def test(config, model, test_iter, model_path):
     # 选用表现最好的那轮
-    model.load_state_dict(torch.load(config.save_path))
+    model.load_state_dict(torch.load(model_path))
     model.eval()
     result = evaluate(config, model, test_iter, is_test=True)
     test_acc = result['accuracy']

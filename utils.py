@@ -1,13 +1,36 @@
 # coding: UTF-8
+import os
 import pickle as pkl
 import time
 from datetime import timedelta
 
+import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
 UNK, PAD = '<UNK>', '<PAD>'  # 未知字，padding符号
+
+
+class DataConfig:
+    def __init__(self, dataset, embedding):
+        self.train_path = os.path.join(dataset, 'train_dataset.csv')
+        self.val_path = os.path.join(dataset, 'val_dataset.csv')
+        self.test_path = os.path.join(dataset, 'test_dataset.csv')
+        self.class_list = [x.strip() for x in
+                           open(os.path.join(dataset, 'pre_data', 'class.txt'), encoding='utf-8').readlines()]
+        self.vocab_path = os.path.join(dataset, 'pre_data', 'vocab.pkl')
+        embedding_path = os.path.join(dataset, 'pre_data', embedding)
+        self.embedding_pretrained = torch.tensor(
+            np.load(embedding_path)["embeddings"].astype('float32')) if embedding != 'random' else None
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.is_random = "random" if embedding == "random" else "not_random"
+        self.num_classes = len(self.class_list)  # 类别数
+        # 设置字向量维度为预训练维度或默认值
+        self.embed = (
+            self.embedding_pretrained.size(1) if self.embedding_pretrained is not None else 100)
+        self.pad_size = 30  # 每句话处理成的长度(短填长切)
+        self.n_vocab = 0  # 词表大小，在运行时赋值
 
 
 # 自定义数据集类，需要实现__len__和__getitem__方法
@@ -18,7 +41,7 @@ class CustomDataset(Dataset):
             path = config.train_path
         elif data_class == 'val':
             path = config.val_path
-        else:
+        elif data_class == 'test':
             path = config.test_path
         vocab = pkl.load(open(config.vocab_path, 'rb'))  # 打开词表
         class_int_dict = {item: i for i, item in enumerate(config.class_list)}
