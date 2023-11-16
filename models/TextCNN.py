@@ -16,7 +16,6 @@ class Config(object):
         self.require_improvement = 10000  # 若超过1000batch效果还没提升，则提前结束训练
         self.num_epochs = 100  # epoch数
         self.batch_size = 512  # mini-batch大小
-
         self.learning_rate = 1e-3  # 学习率
         self.filter_sizes = (2, 3, 4, 5)  # 卷积核尺寸
         self.num_filters = 256  # 卷积核数量(channels数)

@@ -6,6 +6,7 @@ from importlib import import_module
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from torchinfo import summary
 
 from train_eval import train, init_network
 from utils import CustomDataset, DataConfig
@@ -51,12 +52,12 @@ def main():
 
     # 训练
 
-    model = model_module.Model(model_config,data_config).to(data_config.device)
+    model = model_module.Model(model_config, data_config).to(data_config.device)
 
     # 初始化模型参数
     if model_name != 'Transformer':
         init_network(model)
-
+    summary(model, input_size=(1, 30), dtypes=[torch.long])
     train(model_config, data_config, model, train_loader, val_loader, notes)
 
 

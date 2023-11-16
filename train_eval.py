@@ -27,11 +27,11 @@ def init_network(model, method='xavier', exclude='embedding'):
                 pass
 
 
-def train(model_config,data_config, model, train_iter, dev_iter, notes):
+def train(model_config, data_config, model, train_iter, dev_iter, notes):
     start_time = time.time()
     optimizer = torch.optim.Adam(model.parameters(), lr=model_config.learning_rate)
     # 学习率指数衰减，每次epoch：学习率 = gamma * 学习率
-    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9, verbose=True)
     total_batch = 0  # 记录进行到多少batch
     dev_best_loss = float('inf')
     last_improve = 0  # 记录上次验证集loss下降的batch下标
@@ -41,7 +41,6 @@ def train(model_config,data_config, model, train_iter, dev_iter, notes):
     writer = SummaryWriter(log_dir=f'{model_config.log_path}/{str(data_config.embed)}_{notes}_{writer_time}')
     for epoch in range(model_config.num_epochs):
         print(f'Epoch [{epoch + 1}/{model_config.num_epochs}]')
-        scheduler.step() # 学习率衰减
         for x, y, _ in train_iter:
             x = x.to(data_config.device)
             y = y.to(data_config.device)
@@ -84,6 +83,7 @@ def train(model_config,data_config, model, train_iter, dev_iter, notes):
                 print("No optimization for a long time, auto-stopping...")
                 flag = True
                 break
+        scheduler.step()  # 学习率衰减 一轮衰减0.1
         if flag:
             break
     writer.close()
