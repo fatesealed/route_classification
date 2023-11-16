@@ -10,7 +10,9 @@ class Config(object):
 
     def __init__(self, dataset, embedding):
         self.model_name = 'TextCNN'
-        self.data_path = dataset + '/text.csv'
+        self.train_path = dataset + '/train_dataset.csv'
+        self.val_path = dataset + '/val_dataset.csv'
+        self.test_path = dataset + '/test_dataset.csv'
         self.class_list = [x.strip() for x in
                            open(dataset + '/pre_data/class.txt', encoding='utf-8').readlines()]  # 类别名单
         self.vocab_path = dataset + '/pre_data/vocab.pkl'  # 词表
@@ -23,7 +25,7 @@ class Config(object):
         self.is_random = "random" if embedding == "random" else "not_random"
 
         self.dropout = 0.5  # 随机失活
-        self.require_improvement = 10  # 若超过1000batch效果还没提升，则提前结束训练
+        self.require_improvement = 500  # 若超过1000batch效果还没提升，则提前结束训练
         self.num_classes = len(self.class_list)  # 类别数
         self.n_vocab = 0  # 词表大小，在运行时赋值
         self.num_epochs = 1000  # epoch数
