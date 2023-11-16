@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as f
 from sklearn import metrics
 from torch.utils.tensorboard import SummaryWriter
+import torch.autograd.profiler as profiler
 
 from utils import get_time_dif
 
@@ -50,6 +51,7 @@ def train(config, model, train_iter, dev_iter, notes):
             loss = f.cross_entropy(outputs, y)
             loss.backward()
             optimizer.step()
+
             if total_batch % 100 == 0:
                 # 每多少轮输出在训练集和验证集上的效果
                 true = y.data.cpu()
@@ -89,9 +91,9 @@ def train(config, model, train_iter, dev_iter, notes):
     writer.close()
 
 
-def test(config, model, test_iter):
+def test(config, model, test_iter, model_path):
     # 选用表现最好的那轮
-    model.load_state_dict(torch.load(config.save_path))
+    model.load_state_dict(torch.load(model_path))
     model.eval()
     result = evaluate(config, model, test_iter, is_test=True)
     test_acc = result['accuracy']

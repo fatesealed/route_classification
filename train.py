@@ -18,7 +18,7 @@ def main():
     parser.add_argument('--model', type=str, required=True,
                         help='choose a model: TextCNN, TextRNN, FastText, TextRCNN, TextRNN_Att, DPCNN, Transformer')
     parser.add_argument('--embedding', default='pre_trained', type=str, help='random or pre_trained')
-    parser.add_argument('--notes', default='', type=str, help='note for this')
+    parser.add_argument('--notes', default='', type=str, required=True, help='note for this')
     args = parser.parse_args()
 
     # 随机种子设置
@@ -36,12 +36,14 @@ def main():
 
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
-    config = model_module.Config(dataset, embedding)
+    config = model_module.Config(dataset, embedding, notes)
 
+    print('start read data.')
     # 创建自定义数据集
     train_dataset = CustomDataset(config, data_type='train')
     val_dataset = CustomDataset(config, data_type='val')
     vocab = pkl.load(open(config.vocab_path, 'rb'))
+    print('read data done.')
 
     # 数据加载器
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
@@ -56,8 +58,6 @@ def main():
         init_network(model)
 
     print(summary(model, input_size=(1, 30), dtypes=[torch.long]))
-
-    model.embedding_2.requires_grad_(False)
     train(config, model, train_loader, val_loader, notes)
 
 
