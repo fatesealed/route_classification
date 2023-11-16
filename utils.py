@@ -12,12 +12,17 @@ UNK, PAD = '<UNK>', '<PAD>'  # 未知字，padding符号
 
 # 自定义数据集类，需要实现__len__和__getitem__方法
 class CustomDataset(Dataset):
-    def __init__(self, config):
+    def __init__(self, config, data_class):
         tokenizer = lambda x: x.split('|')  # word-level
+        if data_class == 'train':
+            path = config.train_path
+        elif data_class == 'val':
+            path = config.val_path
+        else:
+            path = config.test_path
         vocab = pkl.load(open(config.vocab_path, 'rb'))  # 打开词表
-        print(f"词表大小: {len(vocab)}")
         class_int_dict = {item: i for i, item in enumerate(config.class_list)}
-        df = pd.read_csv(config.data_path, usecols=['path', 'cluster'])  # 读取csv
+        df = pd.read_csv(path, usecols=['path', 'cluster'])  # 读取csv
         contents = []
         for index, row in df.iterrows():
             content, label = row['path'], row['cluster']

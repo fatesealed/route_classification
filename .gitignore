@@ -15,6 +15,7 @@ __pycache__/
 .idea/
 ship_data/
 result/
+tf_log/
 build/
 develop-eggs/
 dist/

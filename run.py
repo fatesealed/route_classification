@@ -5,9 +5,9 @@ from importlib import import_module
 
 import numpy as np
 import torch
-from torch.utils.data import random_split, DataLoader
+from torch.utils.data import DataLoader
 
-from train_eval import train, init_network, test
+from train_eval import train, init_network
 from utils import CustomDataset
 
 
@@ -37,19 +37,15 @@ def main():
     config = model_module.Config(dataset, embedding)
 
     # 创建自定义数据集
-    dataset = CustomDataset(config)
+    print('start read data...')
+    train_dataset = CustomDataset(config, data_class='train')
+    val_dataset = CustomDataset(config, data_class='val')
     vocab = pkl.load(open(config.vocab_path, 'rb'))
-
-    # 数据集拆分
-    train_size = int(0.9 * len(dataset))
-    val_size = int(0.05 * len(dataset))
-    test_size = len(dataset) - train_size - val_size
-    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
+    print('read data done...')
 
     # 数据加载器
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=config.batch_size)
-    test_loader = DataLoader(test_dataset, batch_size=config.batch_size)
 
     # 训练
     config.n_vocab = len(vocab)
@@ -59,13 +55,7 @@ def main():
     if model_name != 'Transformer':
         init_network(model)
 
-
-    print(model.parameters)
-    model.embedding_2.requires_grad_(True)
-    print(model.embedding_2.weight)
     train(config, model, train_loader, val_loader, notes)
-    print(model.embedding_2.weight)
-    t = test(config, model, test_loader)
 
 
 if __name__ == '__main__':

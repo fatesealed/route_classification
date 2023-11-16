@@ -37,8 +37,8 @@ def train(config, model, train_iter, dev_iter, notes):
     last_improve = 0  # 记录上次验证集loss下降的batch下标
     flag = False  # 记录是否很久没有效果提升
     model.train()
-    writer = SummaryWriter(log_dir=config.log_path + '/' + str(config.embed) + '_' + str(
-        config.is_random) + '_' + notes + '_' + time.strftime('%m-%d_%H.%M', time.localtime()))
+    writer_time = time.strftime('%m-%d_%H.%M', time.localtime())
+    writer = SummaryWriter(log_dir=f'{config.log_path}/{str(config.embed)}_{notes}_{writer_time}')
     for epoch in range(config.num_epochs):
         print(f'Epoch [{epoch + 1}/{config.num_epochs}]')
         # scheduler.step() # 学习率衰减
@@ -46,10 +46,10 @@ def train(config, model, train_iter, dev_iter, notes):
             x = x.to(config.device)
             y = y.to(config.device)
             outputs = model(x)
-            model.zero_grad()
             loss = f.cross_entropy(outputs, y)
             loss.backward()
             optimizer.step()
+            optimizer.zero_grad()
             if total_batch % 100 == 0:
                 # 每多少轮输出在训练集和验证集上的效果
                 true = y.data.cpu()
@@ -108,8 +108,8 @@ def test(config, model, test_iter):
 
 
 def evaluate(config, model, data_iter, is_test=False):
+    model.eval()
     with torch.no_grad():
-        model.eval()
         loss_total = 0
         predict_all = []
         labels_all = []

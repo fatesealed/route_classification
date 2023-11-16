@@ -17,7 +17,7 @@ class Config(object):
                            open(dataset + '/pre_data/class.txt', encoding='utf-8').readlines()]  # 类别名单
         self.vocab_path = dataset + '/pre_data/vocab.pkl'  # 词表
         self.save_path = dataset + '/saved_dict/' + self.model_name + '.ckpt'  # 模型训练结果
-        self.log_path = dataset + '/log/' + self.model_name
+        self.log_path = './tf_log/' + self.model_name
         self.embedding_pretrained = torch.tensor(
             np.load(dataset + '/pre_data/' + embedding)["embeddings"].astype('float32')) \
             if embedding != 'random' else None  # 预训练词向量
@@ -25,11 +25,11 @@ class Config(object):
         self.is_random = "random" if embedding == "random" else "not_random"
 
         self.dropout = 0.5  # 随机失活
-        self.require_improvement = 500  # 若超过1000batch效果还没提升，则提前结束训练
+        self.require_improvement = 2500  # 若超过1000batch效果还没提升，则提前结束训练
         self.num_classes = len(self.class_list)  # 类别数
         self.n_vocab = 0  # 词表大小，在运行时赋值
         self.num_epochs = 1000  # epoch数
-        self.batch_size = 64  # mini-batch大小
+        self.batch_size = 512  # mini-batch大小
         self.pad_size = 30  # 每句话处理成的长度(短填长切)
         self.learning_rate = 1e-3  # 学习率
         self.embed = self.embedding_pretrained.size(1) \
@@ -53,11 +53,10 @@ class Model(nn.Module):
         super(Model, self).__init__()
         if config.embedding_pretrained is not None:
             self.embedding_1 = nn.Embedding.from_pretrained(config.embedding_pretrained, freeze=False)
-            self.embedding_2 = nn.Embedding.from_pretrained(config.embedding_pretrained, freeze=False)
+            self.embedding_2 = nn.Embedding.from_pretrained(config.embedding_pretrained, freeze=True)
         else:
             self.embedding_1 = nn.Embedding(config.n_vocab, config.embed, padding_idx=config.n_vocab - 1)
             self.embedding_2 = nn.Embedding(config.n_vocab, config.embed, padding_idx=config.n_vocab - 1)
-        self.embedding_2.requires_grad = False  # 第二层不训练
         self.convs = nn.ModuleList(
             [nn.Conv2d(1, config.num_filters, (k, config.embed * 2)) for k in config.filter_sizes])
         self.dropout = nn.Dropout(config.dropout)
