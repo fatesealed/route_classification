@@ -34,7 +34,7 @@ def main():
 
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
-    config = model_module.Config(dataset, embedding)
+    config = model_module.Config(dataset, embedding,notes)
 
     # 创建自定义数据集
     print('start read data...')
@@ -54,6 +54,7 @@ def main():
     # 初始化模型参数
     if model_name != 'Transformer':
         init_network(model)
+    model.load_state_dict(torch.load('./result/TextCNN_2embedding_not_freezze.ckpt'))
 
     train(config, model, train_loader, val_loader, notes)
 
