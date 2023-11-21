@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
-from train_eval import train, init_network
+from train_eval import train, init_network, test
 from utils import CustomDataset, DataConfig
 
 
@@ -35,13 +35,14 @@ def main():
 
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
-    model_config = model_module.Config(notes)
+    model_config = model_module.ModelConfig(notes)
     data_config = DataConfig(dataset, embedding)
 
     # 创建自定义数据集
     print('start read data...')
     train_dataset = CustomDataset(data_config, data_class='train')
     val_dataset = CustomDataset(data_config, data_class='val')
+    test_dataset = CustomDataset(data_config, data_class='test')
     vocab = pkl.load(open(data_config.vocab_path, 'rb'))
     data_config.n_vocab = len(vocab)
     print('read data done...')
@@ -49,6 +50,7 @@ def main():
     # 数据加载器
     train_loader = DataLoader(train_dataset, batch_size=model_config.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=model_config.batch_size)
+    test_loader = DataLoader(test_dataset, batch_size=model_config.batch_size)
 
     # 训练
 
@@ -59,6 +61,10 @@ def main():
         init_network(model)
     summary(model, input_size=(1, 30), dtypes=[torch.long])
     train(model_config, data_config, model, train_loader, val_loader, notes)
+    # 将测试结果写入文件
+    res = test(data_config, model, test_loader, model_path=model_config.save_path)
+    with open(f'res/{model_config.model_name}_{notes}.txt', "w") as file:
+        file.write(str(res))
 
 
 if __name__ == '__main__':
