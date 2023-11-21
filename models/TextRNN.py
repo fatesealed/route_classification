@@ -2,7 +2,7 @@
 import torch.nn as nn
 
 
-class Config(object):
+class ModelConfig(object):
     """配置参数"""
 
     def __init__(self, notes=''):
@@ -13,7 +13,7 @@ class Config(object):
         self.dropout = 0.5  # 随机失活
         self.require_improvement = 10000  # 若超过1000batch效果还没提升，则提前结束训练
         self.num_epochs = 100  # epoch数
-        self.batch_size = 512  # mini-batch大小
+        self.batch_size = 1024  # mini-batch大小
         self.learning_rate = 1e-3  # 学习率
         self.hidden_size = 256  # lstm隐藏层
         self.num_layers = 2  # lstm层数
@@ -35,7 +35,6 @@ class Model(nn.Module):
 
     def forward(self, x):
         out = self.embedding(x)  # [batch_size, seq_len, embeding]
-        out, _ = self.lstm(out)
+        out, _ = self.lstm(out) # 左右双向
         out = self.fc(out[:, -1, :])  # 句子最后时刻的 hidden state
         return out
-
