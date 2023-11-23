@@ -13,14 +13,15 @@ UNK, PAD = '<UNK>', '<PAD>'  # 未知字，padding符号
 
 
 class DataConfig:
-    def __init__(self, dataset, embedding):
+    def __init__(self, dim, embedding):
+        dataset = 'ship_data'
         self.train_path = os.path.join(dataset, 'train_dataset.csv')
         self.val_path = os.path.join(dataset, 'val_dataset.csv')
         self.test_path = os.path.join(dataset, 'test_dataset.csv')
         self.class_list = [x.strip() for x in
                            open(os.path.join(dataset, 'pre_data', 'class.txt'), encoding='utf-8').readlines()]
         self.vocab_path = os.path.join(dataset, 'pre_data', 'vocab.pkl')
-        embedding_path = os.path.join(dataset, 'pre_data', embedding)
+        embedding_path = os.path.join(dataset, 'pre_data', f'{dim}_{embedding}.npz')
         self.embedding_pretrained = torch.tensor(
             np.load(embedding_path)["embeddings"].astype('float32')) if embedding != 'random' else None
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -31,6 +32,10 @@ class DataConfig:
             self.embedding_pretrained.size(1) if self.embedding_pretrained is not None else 100)
         self.pad_size = 30  # 每句话处理成的长度(短填长切)
         self.n_vocab = 0  # 词表大小，在运行时赋值
+        self.require_improvement = 10000  # 若超过1000batch效果还没提升，则提前结束训练
+        self.num_epochs = 100  # epoch数
+        self.batch_size = 1024  # mini-batch大小
+        self.learning_rate = 1e-3  # 学习率
 
 
 # 自定义数据集类，需要实现__len__和__getitem__方法

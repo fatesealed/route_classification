@@ -17,7 +17,7 @@ def main():
     parser = argparse.ArgumentParser(description='船舶路径分类')
     parser.add_argument('--model', type=str, required=True,
                         help='choose a model: TextCNN, TextRNN, FastText, TextRCNN, TextRNN_Att, DPCNN, Transformer')
-    parser.add_argument('--embedding', default='pre_trained', type=str, help='random or pre_trained')
+    parser.add_argument('--embedding', default='word2vec', type=str, help='random or word2vec or fasttext')
     parser.add_argument('--notes', default='', type=str, help='note for this')
     args = parser.parse_args()
 
@@ -28,15 +28,15 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    dataset = 'ship_data'
-    embedding = 'embedding.npz' if args.embedding == 'pre_trained' else 'random'
+    embedding = 'random' if args.embedding == 'random' else args.embedding
     notes = args.notes
     model_name = args.model
-
+    dim = '100d'
+    print(dim, embedding)
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
     model_config = model_module.ModelConfig(notes)
-    data_config = DataConfig(dataset, embedding)
+    data_config = DataConfig(dim, embedding)
 
     # 创建自定义数据集
     print('start read data...')
@@ -48,9 +48,9 @@ def main():
     print('read data done...')
 
     # 数据加载器
-    train_loader = DataLoader(train_dataset, batch_size=model_config.batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=model_config.batch_size)
-    test_loader = DataLoader(test_dataset, batch_size=model_config.batch_size)
+    train_loader = DataLoader(train_dataset, batch_size=data_config.batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=data_config.batch_size)
+    test_loader = DataLoader(test_dataset, batch_size=data_config.batch_size)
 
     # 训练
 

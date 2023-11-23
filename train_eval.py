@@ -15,7 +15,7 @@ def init_network(model, method='xavier', exclude='embedding'):
     for name, w in model.named_parameters():
         if exclude not in name:  # 如果不是嵌入层
             if 'weight' in name:  # weight 三种初始化方式
-                if method == 'xavier':
+                if method == 'xavier' and len(w.size()) >= 2:
                     nn.init.xavier_normal_(w)
                 elif method == 'kaiming':
                     nn.init.kaiming_normal_(w)
@@ -29,7 +29,7 @@ def init_network(model, method='xavier', exclude='embedding'):
 
 def train(model_config, data_config, model, train_iter, dev_iter, notes):
     start_time = time.time()
-    optimizer = torch.optim.Adam(model.parameters(), lr=model_config.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=data_config.learning_rate)
     # 学习率指数衰减，每次epoch：学习率 = gamma * 学习率
     scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.9, verbose=True)
     total_batch = 0  # 记录进行到多少batch
@@ -39,8 +39,8 @@ def train(model_config, data_config, model, train_iter, dev_iter, notes):
     model.train()
     writer_time = time.strftime('%m-%d_%H.%M', time.localtime())
     writer = SummaryWriter(log_dir=f'{model_config.log_path}/{str(data_config.embed)}_{notes}_{writer_time}')
-    for epoch in range(model_config.num_epochs):
-        print(f'Epoch [{epoch + 1}/{model_config.num_epochs}]')
+    for epoch in range(data_config.num_epochs):
+        print(f'Epoch [{epoch + 1}/{data_config.num_epochs}]')
         for x, y, _ in train_iter:
             x = x.to(data_config.device)
             y = y.to(data_config.device)
@@ -78,7 +78,7 @@ def train(model_config, data_config, model, train_iter, dev_iter, notes):
                 writer.add_scalar("acc/dev", dev_acc, total_batch)
                 model.train()
             total_batch += 1
-            if total_batch - last_improve > model_config.require_improvement:
+            if total_batch - last_improve > data_config.require_improvement:
                 # 验证集loss超过1000batch没下降，结束训练
                 print("No optimization for a long time, auto-stopping...")
                 flag = True
