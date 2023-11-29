@@ -21,10 +21,11 @@ class ModelConfig(object):
 class Model(nn.Module):
     def __init__(self, model_config, data_config):
         super(Model, self).__init__()
-        if data_config.embedding_pretrained is not None:
-            self.embedding = nn.Embedding.from_pretrained(data_config.embedding_pretrained, freeze=False)
-        else:
-            self.embedding = nn.Embedding(data_config.n_vocab, data_config.embed, padding_idx=data_config.n_vocab - 1)
+        self.embedding = nn.Embedding.from_pretrained(
+            data_config.embedding_pretrained,
+            freeze=False) if data_config.embedding_pretrained is not None else nn.Embedding(data_config.n_vocab,
+                                                                                            data_config.embed,
+                                                                                            padding_idx=data_config.n_vocab - 1)
         self.lstm = nn.LSTM(data_config.embed, model_config.hidden_size, model_config.num_layers,
                             bidirectional=True, batch_first=True, dropout=model_config.dropout)
         self.bn = nn.BatchNorm1d(model_config.hidden_size * 2)

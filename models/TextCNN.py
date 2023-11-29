@@ -30,11 +30,11 @@ def conv_and_pool(x, conv):
 class Model(nn.Module):
     def __init__(self, model_config, data_config):
         super(Model, self).__init__()
-        if data_config.embedding_pretrained is not None:
-            self.embedding_1 = nn.Embedding.from_pretrained(data_config.embedding_pretrained, freeze=False)
-        else:
-            self.embedding_1 = nn.Embedding(data_config.n_vocab, data_config.embed,
-                                            padding_idx=data_config.n_vocab - 1)
+        self.embedding = nn.Embedding.from_pretrained(
+            data_config.embedding_pretrained,
+            freeze=False) if data_config.embedding_pretrained is not None else nn.Embedding(data_config.n_vocab,
+                                                                                            data_config.embed,
+                                                                                            padding_idx=data_config.n_vocab - 1)
         self.convs = nn.ModuleList(
             [nn.Conv2d(1, model_config.num_filters, (k, data_config.embed)) for k in model_config.filter_sizes])
         self.dropout = nn.Dropout(model_config.dropout)

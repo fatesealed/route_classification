@@ -1,40 +1,19 @@
-import copy
-
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Config(object):
+class ModelConfig(object):
     """配置参数"""
 
-    def __init__(self, dataset, embedding):
+    def __init__(self, notes=''):
         self.model_name = 'Transformer'
-        self.train_path = dataset + '/data/train.txt'  # 训练集
-        self.dev_path = dataset + '/data/dev.txt'  # 验证集
-        self.test_path = dataset + '/data/test.txt'  # 测试集
-        self.class_list = [x.strip() for x in open(
-            dataset + '/data/class.txt', encoding='utf-8').readlines()]  # 类别名单
-        self.vocab_path = dataset + '/data/vocab.pkl'  # 词表
-        self.save_path = dataset + '/saved_dict/' + self.model_name + '.ckpt'  # 模型训练结果
-        self.log_path = dataset + '/log/' + self.model_name
-        self.embedding_pretrained = torch.tensor(
-            np.load(dataset + '/data/' + embedding)["embeddings"].astype('float32')) \
-            if embedding != 'random' else None  # 预训练词向量
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')  # 设备
-        self.is_random = "random" if embedding == "random" else "not_random"
+        self.save_path = f'./result/{self.model_name}_{notes}.pth'  # 模型训练结果
+        self.log_path = './tf_log/' + self.model_name
 
         self.dropout = 0.5  # 随机失活
-        self.require_improvement = 2500  # 若超过1000batch效果还没提升，则提前结束训练
-        self.num_classes = len(self.class_list)  # 类别数
-        self.n_vocab = 0  # 词表大小，在运行时赋值
-        self.num_epochs = 100  # epoch数
-        self.batch_size = 128  # mini-batch大小
-        self.pad_size = 50  # 每句话处理成的长度(短填长切)
         self.learning_rate = 5e-4  # 学习率
-        self.embed = self.embedding_pretrained.size(1) \
-            if self.embedding_pretrained is not None else 50  # 字向量维度
         self.dim_model = 1
         self.hidden = 1024
         self.last_hidden = 512
@@ -53,16 +32,14 @@ class Model(nn.Module):
         else:
             self.embedding = nn.Embedding(config.n_vocab, config.embed, padding_idx=config.n_vocab - 1)
 
-        self.postion_embedding = Positional_Encoding(config.embed, config.pad_size, config.dropout, config.device)
-        self.encoder = Encoder(config.dim_model, config.num_head, config.hidden, config.dropout)
-        self.encoders = nn.ModuleList([
-            copy.deepcopy(self.encoder)
-            # Encoder(config.dim_model, config.num_head, config.hidden, config.dropout)
-            for _ in range(config.num_encoder)])
-
-        self.fc1 = nn.Linear(config.pad_size * config.dim_model, config.num_classes)
-        # self.fc2 = nn.Linear(config.last_hidden, config.num_classes)
-        # self.fc1 = nn.Linear(config.dim_model, config.num_classes)
+        # self.encoder_layer = nn.TransformerEncoderLayer(d_model=100)
+        # self.postion_embedding = Positional_Encoding(config.embed, config.pad_size, config.dropout, config.device)
+        # self.encoder = Encoder(config.dim_model, config.num_head, config.hidden, config.dropout)
+        # self.encoders = nn.ModuleList([
+        #     copy.deepcopy(self.encoder)
+        #     for _ in range(config.num_encoder)])
+        #
+        # self.fc1 = nn.Linear(config.pad_size * config.dim_model, config.num_classes)
 
     def forward(self, x):
         out = self.embedding(x[0])
