@@ -39,14 +39,20 @@ class Model(nn.Module):
         self.w = nn.Parameter(torch.rand(model_config.hidden_size * 2))
         self.fc = nn.Linear(model_config.hidden_size * 2, model_config.hidden_size)
         self.fc2 = nn.Linear(model_config.hidden_size, data_config.num_classes)
+        self.mutilatte = nn.MultiheadAttention(embed_dim=model_config.hidden_size * 2, num_heads=8, batch_first=True)
 
     def forward(self, x):
         emb_x = torch.cat([self.embedding(x), self.embedding_freeze(x)],
                           dim=2)  # [batch_size, seq_len, embeding]=[128, 32, 300]
         H, _ = self.lstm(emb_x)  # [batch_size, seq_len, hidden_size * num_direction]=[128, 32, 256]
-        M = F.relu(H)  # [128, 32, 256]
-        alpha = F.softmax(torch.matmul(M, self.w), dim=1).unsqueeze(-1)  # [128, 32, 1]
-        out = H * alpha  # [128, 32, 256]
+
+        # M = F.relu(H)  # [128, 32, 256]
+        # alpha = F.softmax(torch.matmul(M, self.w), dim=1).unsqueeze(-1)  # [128, 32, 1]
+        # out = H * alpha  # [128, 32, 256]
+
+        # 👆原始实现 👇pytorch版
+
+        out, _ = self.mutilatte(H, H, H)
         out = torch.sum(out, dim=1)  # 求和
         out = F.relu(out)
         out = self.fc(out)  # [128, 64]
