@@ -13,7 +13,8 @@ UNK, PAD = '<UNK>', '<PAD>'  # 未知字，padding符号
 
 
 class DataConfig:
-    def __init__(self, dim, embedding):
+    def __init__(self, embedding):
+        self.dim = 100
         dataset = 'ship_data'
         self.train_path = os.path.join(dataset, 'train_dataset.csv')
         self.val_path = os.path.join(dataset, 'val_dataset.csv')
@@ -21,7 +22,7 @@ class DataConfig:
         self.class_list = [x.strip() for x in
                            open(os.path.join(dataset, 'pre_data', 'class.txt'), encoding='utf-8').readlines()]
         self.vocab_path = os.path.join(dataset, 'pre_data', 'vocab.pkl')
-        embedding_path = os.path.join(dataset, 'pre_data', f'{dim}_{embedding}.npz')
+        embedding_path = os.path.join(dataset, 'pre_data', f'{self.dim}d_{embedding}.npz')
         self.embedding_pretrained = torch.tensor(
             np.load(embedding_path)["embeddings"].astype('float32')) if embedding != 'random' else None
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

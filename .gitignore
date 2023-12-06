@@ -14,6 +14,7 @@ __pycache__/
 .Python
 .idea/
 ship_data/
+mapping_data/
 result/
 tf_log/
 build/

@@ -33,9 +33,9 @@ class Model(nn.Module):
             freeze=True) if data_config.embedding_pretrained is not None else nn.Embedding(data_config.n_vocab,
                                                                                            data_config.embed,
                                                                                            padding_idx=data_config.n_vocab - 1)
-        self.lstm = nn.LSTM(data_config.embed * 2, model_config.hidden_size, model_config.num_layers,
-                            bidirectional=True, batch_first=True, dropout=model_config.dropout)
-        # self.u = nn.Parameter(torch.Tensor(config.hidden_size * 2, config.hidden_size * 2))
+        self.lstm = nn.GRU(data_config.embed * 2, model_config.hidden_size, model_config.num_layers,
+                           bidirectional=True, batch_first=True, dropout=model_config.dropout)
+        # self.u = nn.Parameter(torch.Tensor(config.hidden_size * 2, config.hidden_ size * 2))
         self.w = nn.Parameter(torch.rand(model_config.hidden_size * 2))
         self.fc = nn.Linear(model_config.hidden_size * 2, model_config.hidden_size)
         self.fc2 = nn.Linear(model_config.hidden_size, data_config.num_classes)

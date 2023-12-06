@@ -42,7 +42,7 @@ class Model(nn.Module):
             nn.Linear(model_config.num_filters * len(model_config.filter_sizes), data_config.num_classes))
 
     def forward(self, x):
-        out = self.embedding_1(x)
+        out = self.embedding(x)
         out = out.unsqueeze(1)  # 插入维度 进行卷积运算
         out = torch.cat([conv_and_pool(out, conv) for conv in self.convs], 1)
         out = self.dropout(out)

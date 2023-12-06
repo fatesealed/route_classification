@@ -31,12 +31,12 @@ def main():
     embedding = 'random' if args.embedding == 'random' else args.embedding
     notes = args.notes
     model_name = args.model
-    dim = '100d'
-    print(dim, embedding)
+
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
     model_config = model_module.ModelConfig(notes)
-    data_config = DataConfig(dim, embedding)
+    data_config = DataConfig(embedding)
+    print(data_config.dim, embedding)
 
     # 创建自定义数据集
     print('start read data...')
