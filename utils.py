@@ -39,9 +39,29 @@ class DataConfig:
         self.learning_rate = 1e-3  # 学习率
 
 
+class BertDataConfig:
+    def __init__(self, ):
+        dataset = 'bert_data'
+        self.train_path = os.path.join(dataset, 'train_dataset.csv')
+        self.val_path = os.path.join(dataset, 'val_dataset.csv')
+        self.test_path = os.path.join(dataset, 'test_dataset.csv')
+        self.class_list = [x.strip() for x in
+                           open(os.path.join(dataset, 'pre_data', 'class.txt'), encoding='utf-8').readlines()]
+        self.vocab_path = os.path.join(dataset, 'pre_data', 'vocab.pkl')
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.num_classes = len(self.class_list)  # 类别数
+        self.pad_size = 30  # 每句话处理成的长度(短填长切)
+        self.n_vocab = 0  # 词表大小，在运行时赋值
+        self.require_improvement = 10000  # 若超过1000batch效果还没提升，则提前结束训练
+        self.num_epochs = 100  # epoch数
+        self.batch_size = 1024  # mini-batch大小
+        self.learning_rate = 1e-3  # 学习率
+
+
 # 自定义数据集类，需要实现__len__和__getitem__方法
 class CustomDataset(Dataset):
     def __init__(self, config, data_class):
+        global path
         tokenizer = lambda x: x.split('|')  # word-level
         if data_class == 'train':
             path = config.train_path
@@ -74,6 +94,28 @@ class CustomDataset(Dataset):
 
     def __getitem__(self, i):
         return torch.LongTensor(self.data[i][0]), self.data[i][1], self.data[i][2]
+
+
+class BertDataset(torch.utils.data.Dataset):
+
+    def __init__(self, config, data_class):
+        global path
+        if data_class == 'train':
+            path = config.train_path
+        elif data_class == 'val':
+            path = config.val_path
+        elif data_class == 'test':
+            path = config.test_path
+        self.class_int_dict = {item: i for i, item in enumerate(config.class_list)}
+        self.dataset = pd.read_csv(path, usecols=['path', 'cluster'])
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, i):
+        text = self.dataset.iloc[i]['path']
+        label = self.class_int_dict[self.dataset.iloc[i]['cluster']]
+        return text, label
 
 
 def get_time_dif(start_time):

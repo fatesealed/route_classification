@@ -1,6 +1,7 @@
 # coding: UTF-8
 import argparse
 import pickle as pkl
+from datetime import datetime
 from importlib import import_module
 
 import numpy as np
@@ -16,7 +17,8 @@ def main():
     # 解析命令行参数
     parser = argparse.ArgumentParser(description='船舶路径分类')
     parser.add_argument('--model', type=str, required=True,
-                        help='choose a model: TextCNN, TextRNN, FastText, TextRCNN, TextRNN_Att, DPCNN, Transformer')
+                        help='choose a model: TextCNN, TextRNN, FastText, TextRCNN, TextRNN_Att, DPCNN, Transformer, '
+                             'BERT')
     parser.add_argument('--embedding', default='word2vec', type=str, help='random or word2vec or fasttext')
     parser.add_argument('--notes', default='', type=str, help='note for this')
     args = parser.parse_args()
@@ -63,7 +65,12 @@ def main():
     train(model_config, data_config, model, train_loader, val_loader, notes)
     # 将测试结果写入文件
     res = test(data_config, model, test_loader, model_path=model_config.save_path)
-    with open(f'res/{model_config.model_name}_{notes}.txt', "w") as file:
+
+    # 获取当前时间
+    current_time = datetime.now()
+    formatted_time = current_time.strftime("%Y-%m-%d %H:%M")
+
+    with open(f'res/{model_config.model_name}_{notes}_{formatted_time}_{embedding}.txt', "w") as file:
         file.write(str(res))
 
 
