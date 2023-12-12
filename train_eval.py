@@ -153,11 +153,12 @@ def bert_train(model_config, data_config, model, train_iter, dev_iter, notes):
     writer.close()
 
 
-def test(config, model, test_iter, model_path):
+def test(config, model, test_iter, model_path, is_bert=False):
     # 选用表现最好的那轮
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    result = evaluate(config, model, test_iter, is_test=True)
+    result = bert_evaluate(config, model, test_iter, is_test=True) if is_bert else evaluate(config, model, test_iter,
+                                                                                            is_test=True)
     test_acc = result['accuracy']
     test_loss = result['loss']
     test_report = result['report']

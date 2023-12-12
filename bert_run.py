@@ -79,7 +79,7 @@ def main():
     summary(model, [(1, 30), (1, 30), (1, 30)], dtypes=[torch.long, torch.long, torch.long])
     bert_train(model_config, data_config, model, train_loader, val_loader, notes)
     # 将测试结果写入文件
-    res = test(data_config, model, test_loader, model_path=model_config.save_path)
+    res = test(data_config, model, test_loader, model_path=model_config.save_path, is_bert=True)
 
     # 获取当前时间
     current_time = datetime.now()

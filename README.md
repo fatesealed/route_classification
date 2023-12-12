@@ -1,22 +1,22 @@
 # 船舶路径分类
 
-> 自用 数据集特殊
+> 项目自用 数据集为船舶特殊数据集
 
 参考大佬：https://github.com/649453932/Chinese-Text-Classification-Pytorch
 
-TextCNN，TextRNN，FastText，TextRCNN，BiLSTM_Attention, DPCNN, Transformer, 基于pytorch，开箱即用。
+TextCNN DPCNN
+
+TextRNN TextRCNN BiLSTM_Attention
+
+Transformer
+
+BERT
+
+基于pytorch，开箱即用。
 
 ## 介绍
 
 模型介绍、数据流动过程：[我的博客](https://zhuanlan.zhihu.com/p/73176084)
-
-数据以字为单位输入模型，预训练词向量使用 [搜狗新闻 Word+Character 300d](https://github.com/Embedding/Chinese-Word-Vectors)，[点这里下载](https://pan.baidu.com/s/14k-9jsspp43ZhMxqPmsWMQ)
-
-### 更换自己的数据集
-
-- 如果用字，按照我数据集的格式来格式化你的数据。
-- 如果用词，提前分好词，词之间用空格隔开，`python run.py --model TextCNN --word True`
-- 使用预训练词向量：utils.py的main函数可以提取词表对应的预训练词向量。
 
 ## 效果
 
@@ -32,12 +32,7 @@ TextCNN，TextRNN，FastText，TextRCNN，BiLSTM_Attention, DPCNN, Transformer, 
 | bert        | 94.83% | bert + fc                  |
 | ERNIE       | 94.61% | 比bert略差(说好的中文碾压bert呢)      |
 
-bert和ERNIE模型代码我放到另外一个仓库了，传送门：[Bert-Chinese-Text-Classification-Pytorch](https://github.com/649453932/Bert-Chinese-Text-Classification-Pytorch)
-，后续还会搞一些bert之后的东西，欢迎star。
 
-### 参数
-
-模型都在models目录下，超参定义和模型定义在同一文件中。
 
 ## 对应论文
 
