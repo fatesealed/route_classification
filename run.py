@@ -61,7 +61,7 @@ def main():
     # 初始化模型参数
     if model_name != 'Transformer':
         init_network(model)
-    summary(model, input_size=(1, 30), dtypes=[torch.long])
+    summary(model, input_size=(2, 30), dtypes=[torch.long])
     train(model_config, data_config, model, train_loader, val_loader, notes)
     # 将测试结果写入文件
     res = test(data_config, model, test_loader, model_path=model_config.save_path)
