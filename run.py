@@ -19,8 +19,10 @@ def main():
     parser.add_argument('--model', type=str, required=True,
                         help='choose a model: TextCNN, TextRNN, FastText, TextRCNN, TextRNN_Att, DPCNN, Transformer, '
                              'BERT')
+    parser.add_argument('--dim', type=int, required=True, help='维度')
     parser.add_argument('--embedding', default='word2vec', type=str, help='random or word2vec or fasttext')
-    parser.add_argument('--notes', default='', type=str, help='note for this')
+    parser.add_argument('--freeze', default=False, type=bool, help='false or true')
+
     args = parser.parse_args()
 
     # 随机种子设置
@@ -31,14 +33,18 @@ def main():
     torch.backends.cudnn.benchmark = False
 
     embedding = 'random' if args.embedding == 'random' else args.embedding
-    notes = args.notes
+    dim = args.dim
     model_name = args.model
+    freeze = args.freeze
+    notes = f'{dim}_{freeze}_{embedding}'
+
+    print(args.freeze)
 
     # 动态导入模型配置和类
     model_module = import_module(f'models.{model_name}')
-    model_config = model_module.ModelConfig(notes)
-    data_config = DataConfig(embedding)
-    print(data_config.dim, embedding)
+    model_config = model_module.ModelConfig(freeze=freeze, notes=notes)
+    data_config = DataConfig(embedding, dim)
+    print(model_name, data_config.dim, embedding)
 
     # 创建自定义数据集
     print('start read data...')

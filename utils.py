@@ -13,8 +13,8 @@ UNK, PAD = '<UNK>', '<PAD>'  # 未知字，padding符号
 
 
 class DataConfig:
-    def __init__(self, embedding):
-        self.dim = 50
+    def __init__(self, embedding, dim):
+        self.dim = dim
         dataset = 'ship_data'
         self.train_path = os.path.join(dataset, 'train_dataset.csv')
         self.val_path = os.path.join(dataset, 'val_dataset.csv')
@@ -33,9 +33,9 @@ class DataConfig:
             self.embedding_pretrained.size(1) if self.embedding_pretrained is not None else self.dim)
         self.pad_size = 30  # 每句话处理成的长度(短填长切)
         self.n_vocab = 0  # 词表大小，在运行时赋值
-        self.require_improvement = 3000  # 若超过1000batch效果还没提升，则提前结束训练
+        self.require_improvement = 5000  # 若超过1000batch效果还没提升，则提前结束训练
         self.num_epochs = 100  # epoch数
-        self.batch_size = 128  # mini-batch大小
+        self.batch_size = 256  # mini-batch大小
         self.learning_rate = 1e-3  # 学习率
 
 

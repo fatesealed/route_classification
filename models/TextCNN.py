@@ -7,7 +7,8 @@ import torch.nn.functional as f
 class ModelConfig(object):
     """配置参数"""
 
-    def __init__(self, notes=''):
+    def __init__(self, freeze, notes=''):
+        self.freeze = freeze
         self.model_name = 'TextCNN'
         self.save_path = f'./result/{self.model_name}_{notes}.pth'  # 模型训练结果
         self.log_path = './tf_log/' + self.model_name
@@ -32,9 +33,10 @@ class Model(nn.Module):
         super(Model, self).__init__()
         self.embedding = nn.Embedding.from_pretrained(
             data_config.embedding_pretrained,
-            freeze=False) if data_config.embedding_pretrained is not None else nn.Embedding(data_config.n_vocab,
-                                                                                            data_config.embed,
-                                                                                            padding_idx=data_config.n_vocab - 1)
+            freeze=model_config.freeze) if data_config.embedding_pretrained is not None else nn.Embedding(
+            data_config.n_vocab,
+            data_config.embed,
+            padding_idx=data_config.n_vocab - 1)
         self.convs = nn.ModuleList(
             [nn.Conv2d(1, model_config.num_filters, (k, data_config.embed)) for k in model_config.filter_sizes])
         self.dropout = nn.Dropout(model_config.dropout)
