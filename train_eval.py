@@ -41,7 +41,7 @@ def train(model_config, data_config, model, train_iter, dev_iter, notes):
     writer = SummaryWriter(log_dir=f'{model_config.log_path}/{str(data_config.embed)}_{notes}_{writer_time}')
     for epoch in range(data_config.num_epochs):
         print(f'Epoch [{epoch + 1}/{data_config.num_epochs}]')
-        for x, y, _ in train_iter:
+        for _, y, x in train_iter:
             x = x.to(data_config.device)
             y = y.to(data_config.device)
             outputs = model(x)
@@ -169,7 +169,7 @@ def test(config, model, test_iter, model_path, is_bert=False):
     print(test_report)
     print("Confusion Matrix...")
     print(test_confusion)
-    return test_report
+    return test_report, test_confusion
 
 
 def bert_evaluate(config, model, data_iter, is_test=False):
@@ -214,7 +214,7 @@ def evaluate(config, model, data_iter, is_test=False):
         loss_total = 0
         predict_all = []
         labels_all = []
-        for x, y, _ in data_iter:
+        for _, y, x in data_iter:
             x = x.to(config.device)
             y = y.to(config.device)
             outputs = model(x)

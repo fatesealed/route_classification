@@ -2,29 +2,24 @@
 import argparse
 import pickle as pkl
 from datetime import datetime
-from importlib import import_module
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
 from torchinfo import summary
 
+import models.AlexNet as AlexNet
+import models.ShipRNN as ShipRNN
 from train_eval import train, init_network, test
 from utils import CustomDataset, DataConfig
 
 
 def main():
     # 解析命令行参数
-    parser = argparse.ArgumentParser(description='船舶路径分类')
-    parser.add_argument('--model', type=str, required=True,
-                        help='choose a model: TextCNN, TextRNN, FastText, TextRCNN, TextRNN_Att, DPCNN, Transformer, '
-                             'BERT')
+    parser = argparse.ArgumentParser(description='biSAMNet船舶路径分类')
     parser.add_argument('--dim', type=int, required=True, help='维度')
-    parser.add_argument('--embedding', default='word2vec', type=str, help='random or word2vec or fasttext')
-    parser.add_argument('--freeze', default=False, action='store_true', help='false or true')
-    parser.add_argument('--class_type',default='cluster', type=str, help='cluster or length_range')
+    parser.add_argument('--class_type', default='cluster', type=str, help='cluster or length_range')
     parser.add_argument('--comment', default=False, help='false or true')
-
 
     args = parser.parse_args()
 
@@ -35,17 +30,14 @@ def main():
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    embedding = 'random' if args.embedding == 'random' else args.embedding
+    embedding = 'word2vec'
     dim = args.dim
-    model_name = args.model
-    freeze = args.freeze
+    model_name = 'ShipRNN'
     class_type = args.class_type
-    notes = f'{dim}_{freeze}_{embedding}_{args.comment}'
+    notes = f'{dim}_{embedding}_{args.comment}'
 
-    # 动态导入模型配置和类
-    model_module = import_module(f'models.{model_name}')
-    model_config = model_module.ModelConfig(freeze=freeze, notes=notes)
-    data_config = DataConfig(embedding, dim,class_type)
+    model_config = ShipRNN.ModelConfig(notes=notes)
+    data_config = DataConfig(embedding, dim, class_type)
     print(model_name, data_config.dim, embedding)
 
     # 创建自定义数据集
@@ -62,14 +54,13 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=data_config.batch_size)
     test_loader = DataLoader(test_dataset, batch_size=data_config.batch_size)
 
-    # 训练
-
-    model = model_module.Model(model_config, data_config).to(data_config.device)
+    # model = ShipRNN.Model(model_config, data_config).to(data_config.device)
+    model = AlexNet.AlexNet(data_config)
 
     # 初始化模型参数
-    if model_name != 'Transformer':
-        init_network(model)
-    summary(model, input_size=(2, 30), dtypes=[torch.long])
+
+    init_network(model)
+    summary(model, input_size=(2, 1, 31, 28), dtypes=[torch.float])
     train(model_config, data_config, model, train_loader, val_loader, notes)
     # 将测试结果写入文件
     res, res1 = test(data_config, model, test_loader, model_path=model_config.save_path)
@@ -78,7 +69,7 @@ def main():
     current_time = datetime.now()
     formatted_time = current_time.strftime("%Y-%m-%d %H:%M")
 
-    with open(f'res/{model_config.model_name}_{notes}_{formatted_time}_{embedding}.txt', "w") as file:
+    with open(f'res_6/{model_config.model_name}_{notes}_{formatted_time}_{embedding}.txt', "w") as file:
         file.write(str(res))
         file.write(str(res1))
 
