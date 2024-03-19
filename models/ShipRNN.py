@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class ModelConfig(object):
     """配置参数"""
 
-    def __init__(self, freeze, notes=''):
+    def __init__(self, freeze=False, notes=''):
         self.model_name = 'ShipRNN'
         self.save_path = f'./result/{self.model_name}_{notes}.ckpt'  # 模型训练结果
         self.log_path = './tf_log/' + self.model_name
@@ -21,7 +21,6 @@ class ModelConfig(object):
 class Model(nn.Module):
     def __init__(self, model_config, data_config):
         super(Model, self).__init__()
-        print(model_config.freeze)
         # Existing code
         self.embedding = nn.Embedding.from_pretrained(
             data_config.embedding_pretrained,
