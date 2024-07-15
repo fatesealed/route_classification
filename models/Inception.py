@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torchvision
+from torchinfo import summary
+
 
 def ConvBNReLU(in_channels,out_channels,kernel_size):
     return nn.Sequential(
@@ -135,3 +137,4 @@ if __name__=='__main__':
     print(aux1.shape)
     print(aux2.shape)
     print(out.shape)
+    print(summary(model, input_size=(1, 3, 224, 224), dtypes=[torch.float]))

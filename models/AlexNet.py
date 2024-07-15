@@ -54,4 +54,4 @@ if __name__ == '__main__':
     print(out.shape)
 
     batch_size = 256
-    summary(model, input_size=(batch_size, 1, 31, 28), dtypes=[torch.float])
+    print(summary(model, input_size=(batch_size, 1, 31, 28), dtypes=[torch.float]))

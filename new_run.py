@@ -59,7 +59,7 @@ def main():
     test_loader = DataLoader(test_dataset, batch_size=data_config.batch_size)
 
     # model = ShipRNN.Model(model_config, data_config).to(data_config.device)
-    model = MyResNet(data_config.num_classes)
+    model = LeNet(data_config.num_classes)
 
     # 初始化模型参数
 

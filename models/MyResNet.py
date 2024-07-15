@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torchinfo import summary
 
 
 def resnet_block(input_channels, num_channels, num_residuals,
